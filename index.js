@@ -4,6 +4,7 @@ import bodyParser from "body-parser";
 import ejs from "ejs";
 import pg from "pg";
 import { error } from "console";
+import md5 from "md5";
 
 const app = express();
 const port = 3000;
@@ -31,7 +32,7 @@ app.get("/register",(req, res) => {
 
 app.post("/register",async (req, res) => {
     const email=req.body.email;
-    const password = req.body.password;
+    const password = md5(req.body.password);
     try{
         const result = await db.query("SELECT * FROM users WHERE email = $1",[email]);
         
@@ -56,12 +57,12 @@ app.get("/login",(req, res) => {
 
 app.post("/login",async (req, res) => {
     const email=req.body.email;
-    const password = req.body.password;
+    const password = md5(req.body.password);
     try{
         const result = await db.query("SELECT * FROM users WHERE email = $1",[email]);
 
         if(result.rows[0]){
-            const user = result.rows[0]
+            const user = result.rows[0];
             const userPassword = user.password;
 
             if(password === userPassword){
