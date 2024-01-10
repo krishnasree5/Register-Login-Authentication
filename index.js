@@ -1,10 +1,12 @@
 import "dotenv/config";
+import bcrypt from "bcrypt";
 import express from "express";
 import bodyParser from "body-parser";
 import ejs from "ejs";
 import pg from "pg";
 import { error } from "console";
-import md5 from "md5";
+//import md5 from "md5";
+const saltRounds = 10;
 
 const app = express();
 const port = 3000;
@@ -32,7 +34,7 @@ app.get("/register",(req, res) => {
 
 app.post("/register",async (req, res) => {
     const email=req.body.email;
-    const password = md5(req.body.password);
+    const password = req.body.password;
     try{
         const result = await db.query("SELECT * FROM users WHERE email = $1",[email]);
         
@@ -41,9 +43,12 @@ app.post("/register",async (req, res) => {
             res.render("register.ejs");
 
         }else{
-            await db.query("INSERT INTO users VALUES ($1, $2)",[email, password]);
-            console.log("User registered successfully!");
-            res.render("dest.ejs");
+            bcrypt.hash(password, saltRounds, async function(err, hash) {
+                await db.query("INSERT INTO users VALUES ($1, $2)",[email, hash]);
+                console.log("User registered successfully!");
+                res.render("dest.ejs");
+            });
+            
         }
 
     }catch(err){
@@ -57,22 +62,25 @@ app.get("/login",(req, res) => {
 
 app.post("/login",async (req, res) => {
     const email=req.body.email;
-    const password = md5(req.body.password);
+    const password = req.body.password;
     try{
         const result = await db.query("SELECT * FROM users WHERE email = $1",[email]);
 
         if(result.rows[0]){
             const user = result.rows[0];
-            const userPassword = user.password;
+            const hash = user.password;
+            bcrypt.compare(password, hash, function(err, result) {
+                
+                if(result){
+                    console.log("Login successful.");
+                    res.render("dest.ejs");
+                }else{
+                    console.log("Incorrect Password");
+                    res.render("login.ejs");
+                }
 
-            if(password === userPassword){
-                console.log("Login successful.");
-                res.render("dest.ejs");
-            }else{
-                console.log("Incorrect Password");
-                res.render("login.ejs");
-            }
-        
+            });
+
         }else{
             console.log("User not found!");
             res.render("login.ejs");
