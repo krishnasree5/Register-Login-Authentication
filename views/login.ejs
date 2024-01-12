@@ -1,16 +1,20 @@
 <%- include('partials/header') %>
 
-    <h1>Please Login</h1>
+    <h1>Please Login</h1><br>
     <div class="login">
         <form action="/login" method="post">
             <label for="username">Email</label>
             <input type="email" name="username" id="name" required>
-
+            <br/>
             <label for="password">Password</label>
             <input type="password" name="password" id="password" required>
-
-            <button type="submit">Login</button>
+            <br/>
+            <button type="submit" class="btn btn-primary">Login</button>
         </form>
+        <p>Dont have an account? <a href="/register">Sign up</a></p>
+        <a href="http://localhost:3000/auth/google/" role="button" class="login-with-google-btn">
+            Log in with Google
+        </a>
     </div>
 
 <%- include('partials/footer') %>

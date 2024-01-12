@@ -1,14 +1,24 @@
 <%- include('partials/header') %>
 
-    <h1>Please Register</h1>
+    <h1>Please Register</h1><br>
     <div class="register">
             <form action="/register" method="post">
-                <label for="email">Email</label>
-                <input type="email" name="username" id="name" required>
-                <label for="password">Password</label>
-                <input type="password" name="password" id="password" required>
-                <button type="submit">Register</button>
-        </form>
-    </div>    
+                <table>
+                    <tr>
+                        <td><label for="email">Email</label></td>
+                        <td><input type="email" name="username" id="name" required></td>
+                    </tr>
+                    <tr>
+                        <td><label for="password">Password</label></td>
+                        <td><input type="password" name="password" id="password" required></td>
+                    </tr> 
+                </table>
+                <button type="submit" class="btn btn-primary">Register</button>
+            </form>
+            <p>Already have an account <a class="idk" href="/login">Log in</a></p>
+            <a href="http://localhost:3000/auth/google/" role="button" class="login-with-google-btn">
+                Sign up with Google
+            </a>
+    </div>
 
 <%- include('partials/footer') %>

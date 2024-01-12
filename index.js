@@ -6,6 +6,7 @@ import bcrypt from "bcrypt";
 import passport from "passport";
 import localPassport from "passport-local";
 import session from "express-session";
+import {Strategy as GoogleStrategy} from "passport-google-oauth20";
 //import md5 from "md5";
 const saltRounds = 10;
  
@@ -86,6 +87,32 @@ passport.deserializeUser(async (id,done)=>{
         done(error,false);
     }
 });
+
+passport.use(new GoogleStrategy({
+    clientID: process.env.CLIENT_ID,
+    clientSecret: process.env.CLIENT_SECRET,
+    callbackURL: "http://localhost:3000/auth/google/callback"
+  },
+  async (accessToken, refreshToken, profile, cb) => {
+    console.log(profile);       //useful info(profile) : id, name
+    console.log(profile._json.email);
+    const googleID = profile.id;
+    const gmail = profile._json.email;
+    const result = await db.query("SELECT * FROM users WHERE googleID = $1",[googleID]);
+    const user = result.rows[0];
+
+    try{
+        if(user !== undefined){
+            cb(null, user);
+        }else{
+            await db.query("INSERT INTO users (email, googleID) VALUES ($1,$2)",[gmail, googleID]);
+            cb(null, user);
+        }
+    }catch(err){
+        console.log(err);
+    }
+  }
+));
  
 app.get("/",async (req,res)=>{
     res.render("home.ejs");
@@ -106,7 +133,16 @@ app.post("/login", passport.authenticate("local-login",{
     failureRedirect: "/login",
     successRedirect: "/dest",
 }));
- 
+
+app.get('/auth/google',
+  passport.authenticate('google', { scope: ['profile', 'email'] }));
+
+app.get('/auth/google/callback', 
+  passport.authenticate('google',{
+  failureRedirect: '/login', 
+  successRedirect: '/dest', 
+}));
+
 app.get("/dest",(req,res)=>{
     if(req.isAuthenticated()){
         res.render("dest.ejs");
