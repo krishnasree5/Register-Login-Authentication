@@ -7,6 +7,7 @@ import passport from "passport";
 import localPassport from "passport-local";
 import session from "express-session";
 import {Strategy as GoogleStrategy} from "passport-google-oauth20";
+import { Strategy as GitHubStrategy } from "passport-github2";
 //import md5 from "md5";
 const saltRounds = 10;
  
@@ -89,16 +90,16 @@ passport.deserializeUser(async (id,done)=>{
 });
 
 passport.use(new GoogleStrategy({
-    clientID: process.env.CLIENT_ID,
-    clientSecret: process.env.CLIENT_SECRET,
+    clientID: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     callbackURL: "http://localhost:3000/auth/google/callback"
   },
   async (accessToken, refreshToken, profile, cb) => {
-    console.log(profile);       //useful info(profile) : id, name
-    console.log(profile._json.email);
+    //console.log(profile);       //useful info(profile) : id, name
+    //console.log(profile._json.email);
     const googleID = profile.id;
     const gmail = profile._json.email;
-    const result = await db.query("SELECT * FROM users WHERE googleID = $1",[googleID]);
+    const result = await db.query("SELECT * FROM users WHERE googleid = $1",[googleID]);
     const user = result.rows[0];
 
     try{
@@ -113,6 +114,32 @@ passport.use(new GoogleStrategy({
     }
   }
 ));
+
+passport.use(new GitHubStrategy({
+    clientID: process.env.GITHUB_CLIENT_ID,
+    clientSecret: process.env.GITHUB_CLIENT_SECRET,
+    callbackURL: "http://localhost:3000/auth/github/callback"
+  },
+  async(accessToken, refreshToken, profile, done) => {
+    const githubid = profile.id;
+    const gmail = profile.username;
+
+    const result = await db.query("SELECT * FROM users WHERE githubid = $1",[githubid]);
+    const user = result.rows[0];
+
+    try{
+        if(user !== undefined){
+            done(null, user);
+        }else{
+            const user = await db.query("INSERT INTO users (email, githubid) VALUES ($1,$2)",[gmail,githubid]);
+            done(null, user); 
+        }
+    }catch(err){
+        console.log(err);
+        done(err, false);
+    }
+  }
+));
  
 app.get("/",async (req,res)=>{
     res.render("home.ejs");
@@ -121,6 +148,7 @@ app.get("/",async (req,res)=>{
 app.get("/register",(req,res)=>{
     res.render("register.ejs");
 });
+
 app.post("/register", passport.authenticate("local-register",{
     failureRedirect: "/register",
     successRedirect: "/dest",
@@ -129,18 +157,28 @@ app.post("/register", passport.authenticate("local-register",{
 app.get("/login",(req,res)=>{
     res.render("login.ejs");
 });
+
 app.post("/login", passport.authenticate("local-login",{
     failureRedirect: "/login",
     successRedirect: "/dest",
 }));
 
-app.get('/auth/google',
-  passport.authenticate('google', { scope: ['profile', 'email'] }));
+app.get("/auth/google",
+  passport.authenticate("google", { scope: ["profile", "email"] }));
 
-app.get('/auth/google/callback', 
-  passport.authenticate('google',{
-  failureRedirect: '/login', 
-  successRedirect: '/dest', 
+app.get("/auth/google/callback", 
+  passport.authenticate("google",{
+  failureRedirect: "/login", 
+  successRedirect: "/dest", 
+}));
+
+app.get("/auth/github",
+  passport.authenticate("github", { scope: [ "user:email" ] }));
+
+app.get("/auth/github/callback", 
+  passport.authenticate("github", { 
+    failureRedirect: "/login",
+    successRedirect: "/dest",
 }));
 
 app.get("/dest",(req,res)=>{

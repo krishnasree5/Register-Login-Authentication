@@ -4,7 +4,8 @@ CREATE TABLE users( <br/>
 	id SERIAL PRIMARY KEY, <br/>
 	email TEXT UNIQUE NOT NULL, <br/>
 	password TEXT, <br/>
-	googleID TEXT <br/>
+	googleid TEXT, <br/>
+	githubid TEXT <br/>
 );<br/><br/>
 
 Level 1: verifying email and password from database.<br/>
