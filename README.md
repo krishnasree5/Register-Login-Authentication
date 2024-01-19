@@ -13,4 +13,4 @@ Level 2: environment variables.<br/>
 Level 3: Hashing passwords (using md5).<br/>
 Level 4: Salting and Hashing passwords (using bcrypt).<br/>
 Level 5: Sessions and Cookies (using express-session, passport, passport-local). <br/>
-Level 6: Social login with google, github, linkedin
+Level 6: Social login with google and github.
